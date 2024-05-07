@@ -1,0 +1,35 @@
+global:
+  scrape_interval:     10s
+  evaluation_interval: 10s
+
+scrape_configs:
+  - job_name: 'product_service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['product-service:9000']
+        labels:
+          application: 'Product Service Application'
+  - job_name: 'order_service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['order-service:8000']
+        labels:
+          application: 'Order Service Application'
+  - job_name: 'inventory_service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['inventory-service:8100']
+        labels:
+          application: 'Inventory Service Application'
+  - job_name: 'customer-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['customer-service:7000']
+        labels:
+          application: 'Customer Service Application'
+  - job_name: 'payment-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['payment-service:9100']
+        labels:
+          application: 'Payment Service Application'        

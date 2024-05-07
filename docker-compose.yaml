@@ -1,0 +1,137 @@
+version: '1.0'
+
+services:
+  customer-service:
+    image: dhavalmodi11/customer-service:1.0.0
+    mem_limit: 500m
+    ports: 
+      - "7000:7000"
+    networks:
+      - ecommerce-network
+    depends_on:
+      - naming-service
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://naming-service:8761/eureka
+      MANAGEMENT.ZIPKIN.TRACING.ENDPOINT: http://zipkin-server:9411/api/v2/spans
+      
+  inventory-service:
+    image: dhavalmodi11/inventory-service:1.0.0
+    mem_limit: 500m
+    ports: 
+      - "8100:8100"
+    networks:
+      - ecommerce-network
+    depends_on:
+      - naming-service
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://naming-service:8761/eureka
+      MANAGEMENT.ZIPKIN.TRACING.ENDPOINT: http://zipkin-server:9411/api/v2/spans
+
+  order-service:
+    image: dhavalmodi11/order-service:1.0.0
+    mem_limit: 500m
+    ports: 
+      - "8000:8000"
+    networks:
+      - ecommerce-network
+    depends_on:
+      - naming-service
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://naming-service:8761/eureka
+      MANAGEMENT.ZIPKIN.TRACING.ENDPOINT: http://zipkin-server:9411/api/v2/spans
+
+  payment-service:
+    image: dhavalmodi11/payment-service:1.0.0
+    mem_limit: 500m
+    ports: 
+      - "9100:9100"
+    networks:
+      - ecommerce-network
+    depends_on:
+      - naming-service
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://naming-service:8761/eureka
+      MANAGEMENT.ZIPKIN.TRACING.ENDPOINT: http://zipkin-server:9411/api/v2/spans
+
+  product-service:
+    image: dhavalmodi11/product-service:1.0.0
+    mem_limit: 500m
+    ports: 
+      - "9000:9000"
+    networks:
+      - ecommerce-network
+    depends_on:
+      - naming-service
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://naming-service:8761/eureka
+      MANAGEMENT.ZIPKIN.TRACING.ENDPOINT: http://zipkin-server:9411/api/v2/spans
+      
+  api-gateway:
+    image: dhavalmodi11/api-gateway-service:1.0.0
+    mem_limit: 500m
+    ports: 
+      - "8765:8765"
+    networks:
+      - ecommerce-network
+    depends_on:
+      - naming-service
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://naming-service:8761/eureka
+      MANAGEMENT.ZIPKIN.TRACING.ENDPOINT: http://zipkin-server:9411/api/v2/spans
+      
+  
+  naming-service:
+    image: dhavalmodi11/naming-service:1.0.0
+    mem_limit: 500m
+    ports: 
+      - "8761:8761"
+    networks:
+      - ecommerce-network
+      
+  zipkin-server:
+    image: openzipkin/zipkin:2.23
+    mem_limit: 300m
+    ports:
+      - "9411:9411"
+    networks:
+      - ecommerce-network
+    restart: always #Restart if there is a problem starting up
+    
+  ## Prometheus
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    networks:
+      - ecommerce-network
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    depends_on:
+      - product-service
+      - inventory-service
+      - order-service
+      - payment-service
+      - customer-service
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    networks:
+      - ecommerce-network
+    links:
+      - prometheus:prometheus
+    volumes:
+      - ./grafana:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=password
+
+networks:
+  ecommerce-network:
